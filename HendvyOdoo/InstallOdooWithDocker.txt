@@ -1,0 +1,109 @@
+Docker Compose examples
+
+The simplest docker-compose.yml file would be:
+
+version: '3.1'
+services:
+  web:
+    image: odoo:16.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
+
+If the default postgres credentials does not suit you, tweak the environment variables:
+
+version: '3.1'
+services:
+  web:
+    image: odoo:16.0
+    depends_on:
+      - mydb
+    ports:
+      - "8069:8069"
+    environment:
+    - HOST=mydb
+    - USER=odoo
+    - PASSWORD=myodoo
+  mydb:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=myodoo
+      - POSTGRES_USER=odoo
+
+Here's a last example showing you how to
+
+    mount custom addons located in ./addons
+    use a custom configuration file located in .config/odoo.conf
+    use named volumes for the Odoo and postgres data dir
+    use a secrets file named odoo_pg_pass that contains the postgreql password shared by both services
+
+version: '3.1'
+services:
+  web:
+    image: odoo:16.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons
+    environment:
+      - PASSWORD_FILE=/run/secrets/postgresql_password
+    secrets:
+      - postgresql_password
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgresql_password
+      - POSTGRES_USER=odoo
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data/pgdata
+    secrets:
+      - postgresql_password
+volumes:
+  odoo-web-data:
+  odoo-db-data:
+
+secrets:
+  postgresql_password:
+    file: odoo_pg_pass
+
+To start your Odoo instance, go in the directory of the docker-compose.yml file you created from the previous examples and type:
+
+docker-compose up -d
+
+
+
+To stop and remove Odoo instance
+
+docker-compose down
+
+
+
+username:henryns@163.com
+password:myodoo  123123
+
+
+###########################################################################################
+ docker容器以ROOT账号登录（获取ROOT权限/ROOT密码） 转载
+
+
+第一步：查看容器的CONTAINER ID
+
+docker ps
+
+第二步：获取root权限，例如需要进入的CONTAINER ID为4650e8d1bcca
+
+docker exec -ti -u root 4650e8d1bcca bash
